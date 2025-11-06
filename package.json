@@ -1,0 +1,12 @@
+{
+  "name": "orchestrator-wasm-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WASM orchestrator workspace with web frontend",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "preview": "pnpm --filter web preview"
+  }
+}
+
