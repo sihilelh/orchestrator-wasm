@@ -1,9 +1,9 @@
 import "./App.css";
-import { WaveEditor } from "@/components/wave-editor";
-import { WaveVisualize } from "@/components/wave-visualize";
-import { MIDIEditor } from "@/components/midi-editor";
-import { Player } from "@/components/player";
-import { ExportImport } from "@/components/export-import";
+import { WaveEditor } from "@/components/organisms/wave-editor";
+import { WaveVisualize } from "@/components/organisms/wave-visualize";
+import { MIDIEditor } from "@/components/organisms/midi-editor";
+import { Player } from "@/components/organisms/player";
+import { ExportImport } from "@/components/organisms/export-import";
 
 function App() {
   return (
