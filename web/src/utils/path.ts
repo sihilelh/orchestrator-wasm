@@ -1,3 +1,5 @@
+import { useWaveStore } from "@/stores/wave.store";
+
 interface PathValues {
   startPoint: { y: number };
   endPoint: { y: number };
@@ -38,5 +40,33 @@ export const getClippedPathValues = (path: PathValues): ClippedPathValues => {
       x: normalizeX(path.controlPoint2.x),
       y: normalizeY(path.controlPoint2.y),
     },
+  };
+};
+
+export const getPathValues = (
+  clippedPathValues: ClippedPathValues
+): PathValues => {
+  // Get the current size from the wave store
+  const size = useWaveStore.getState().size;
+  const width = size;
+  const height = size;
+
+  // Reverse the normalization for X
+  const denormalizeX = (x: number) => Math.round(x * width);
+  // Reverse the normalization for Y
+  const denormalizeY = (y: number) => Math.round((1 - (y + 1) / 2) * height);
+
+  return {
+    startPoint: { y: denormalizeY(clippedPathValues.startPoint.y) },
+    endPoint: { y: denormalizeY(clippedPathValues.endPoint.y) },
+    controlPoint1: {
+      x: denormalizeX(clippedPathValues.controlPoint1.x),
+      y: denormalizeY(clippedPathValues.controlPoint1.y),
+    },
+    controlPoint2: {
+      x: denormalizeX(clippedPathValues.controlPoint2.x),
+      y: denormalizeY(clippedPathValues.controlPoint2.y),
+    },
+    size: { width, height },
   };
 };

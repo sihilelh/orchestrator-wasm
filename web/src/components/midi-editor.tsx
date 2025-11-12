@@ -12,7 +12,6 @@ export const MIDIEditor = () => {
     bpm,
     setBpm,
     visibleTimeline,
-    timeline,
     snapToGridSize,
     setSnapToGridSize,
     zoom,
@@ -209,12 +208,6 @@ export const MIDIEditor = () => {
           </div>
         </div>
       </div>
-      Visible Timeline
-      <pre>{JSON.stringify(visibleTimeline, null, 2)}</pre>
-      <br />
-      <br />
-      Timeline
-      <pre>{JSON.stringify(timeline, null, 2)}</pre>
     </div>
   );
 };

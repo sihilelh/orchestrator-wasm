@@ -3,6 +3,7 @@ import { WaveEditor } from "@/components/wave-editor";
 import { WaveVisualize } from "@/components/wave-visualize";
 import { MIDIEditor } from "@/components/midi-editor";
 import { Player } from "@/components/player";
+import { ExportImport } from "@/components/export-import";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Player />
       </div>
       <div>
+        <ExportImport />
         <MIDIEditor />
       </div>
     </div>

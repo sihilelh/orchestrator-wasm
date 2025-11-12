@@ -1,5 +1,9 @@
 import { create } from "zustand";
-import { validateNoteAddition, generateTimeline } from "@/utils/editor.utils";
+import {
+  validateNoteAddition,
+  generateTimeline,
+  generateNoteId,
+} from "@/utils/editor.utils";
 
 export interface TimelineItem {
   id: string; // Unique identifier for the note
@@ -52,6 +56,7 @@ interface MIDIEditorStore {
   ) => boolean; // Returns true if update succeeded, false if validation failed
   removeNote: (noteId: string) => void;
   generateParameters: () => Parameters;
+  importFromNotes: (notes: Parameters["notes"]) => void;
 }
 
 export const useMIDIEditorStore = create<MIDIEditorStore>((set, get) => ({
@@ -162,5 +167,26 @@ export const useMIDIEditorStore = create<MIDIEditorStore>((set, get) => ({
         amplitude: note.amplitude,
       })),
     };
+  },
+  importFromNotes: (notes) => {
+    // Set all notes to the timeline
+    const timeline: TimelineItem[] = [];
+    let startBeatIndex = 0;
+    for (const note of notes) {
+      const duration = note.beats;
+      const endBeatIndex = startBeatIndex + duration;
+      timeline.push({
+        id: generateNoteId(),
+        octave: note.octave,
+        noteId: note.id,
+        duration,
+        amplitude: note.amplitude,
+        startBeatIndex,
+        endBeatIndex,
+      });
+      startBeatIndex += duration;
+    }
+    const visibleTimeline = timeline.filter((note) => note.amplitude > 0);
+    set({ timeline, visibleTimeline });
   },
 }));
