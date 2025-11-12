@@ -147,11 +147,12 @@ pub fn bezier_oscillator(
 ///     amplitude: 0.8   // Amplitude 0.0-1.0
 ///   }]
 ///   ```
+/// * `sample_rate` - Sample rate in Hz (typically 44100)
 ///
 /// # Returns
 /// A Uint8Array containing the complete WAV file that can be used in an HTML audio element
 #[wasm_bindgen]
-pub fn sine_orchestrator(bpm: u8, notes: JsValue) -> Result<Vec<u8>, JsValue> {
+pub fn sine_orchestrator(bpm: u8, notes: JsValue, sample_rate: u32) -> Result<Vec<u8>, JsValue> {
     if bpm == 0 {
         return Err(JsValue::from_str("BPM must be greater than 0"));
     }
@@ -164,7 +165,6 @@ pub fn sine_orchestrator(bpm: u8, notes: JsValue) -> Result<Vec<u8>, JsValue> {
     }
 
     let orchestrator = SineOrchestrator { bpm, notes };
-    let sample_rate = 44100;
 
     let pcm_samples = orchestrator
         .pcm_samples(sample_rate)
@@ -188,6 +188,7 @@ pub fn sine_orchestrator(bpm: u8, notes: JsValue) -> Result<Vec<u8>, JsValue> {
 ///     amplitude: 0.8   // Amplitude 0.0-1.0
 ///   }]
 ///   ```
+/// * `sample_rate` - Sample rate in Hz (typically 44100)
 ///
 /// # Returns
 /// A Uint8Array containing the complete WAV file that can be used in an HTML audio element
@@ -196,6 +197,7 @@ pub fn bezier_orchestrator(
     control_points: Vec<f64>,
     bpm: u8,
     notes: JsValue,
+    sample_rate: u32,
 ) -> Result<Vec<u8>, JsValue> {
     if bpm == 0 {
         return Err(JsValue::from_str("BPM must be greater than 0"));
@@ -215,7 +217,6 @@ pub fn bezier_orchestrator(
         notes,
         control_points,
     };
-    let sample_rate = 44100;
 
     let pcm_samples = orchestrator
         .pcm_samples(sample_rate)
