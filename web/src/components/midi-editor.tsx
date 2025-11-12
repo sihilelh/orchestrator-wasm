@@ -1,7 +1,8 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useMIDIEditorStore } from "@/stores/midi-editor.store";
 import { Rnd } from "react-rnd";
 import { beatsToPixels, pixelsToBeats, snapToGrid } from "@/utils/editor.utils";
+import { useDebounceCallback } from "@/hooks/useDebounce";
 
 export const MIDIEditor = () => {
   const {
@@ -23,6 +24,22 @@ export const MIDIEditor = () => {
     removeNote,
   } = useMIDIEditorStore();
 
+  const [localNoteAmplitude, setLocalNoteAmplitude] = useState<number>(0);
+
+  // Get selected note for amplitude slider
+  const selectedNote = selectedNoteId
+    ? visibleTimeline.find((note) => note.id === selectedNoteId)
+    : null;
+
+  // Sync local amplitude with store when selected note changes
+  useEffect(() => {
+    if (selectedNote) {
+      setLocalNoteAmplitude(selectedNote.amplitude);
+    } else {
+      setLocalNoteAmplitude(0);
+    }
+  }, [selectedNote]);
+
   // Calculate minimum timeline width (16 beats minimum, or more if notes extend beyond)
   const minTimelineBeats = 16;
   const maxBeat =
@@ -33,6 +50,14 @@ export const MIDIEditor = () => {
         )
       : minTimelineBeats;
   const timelineWidth = beatsToPixels(maxBeat, zoom);
+
+  // Create debounced callback for amplitude updates
+  const debouncedUpdateAmplitude = useDebounceCallback(
+    (noteId: string, amplitude: number) => {
+      updateNote(noteId, { amplitude });
+    },
+    500 // 500ms delay for amplitude changes
+  );
 
   return (
     <div>
@@ -140,27 +165,22 @@ export const MIDIEditor = () => {
           </div>
           <div className="w-[10%]">
             Selected note's amplitude
-            {selectedNoteId ? (
-              (() => {
-                const selectedNote = visibleTimeline.find(
-                  (note) => note.id === selectedNoteId
-                );
-                return selectedNote ? (
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={selectedNote.amplitude}
-                    onChange={(e) =>
-                      updateNote(selectedNoteId, {
-                        amplitude: parseFloat(e.target.value),
-                      })
-                    }
-                    className="-rotate-90"
-                  />
-                ) : null;
-              })()
+            {selectedNoteId && selectedNote ? (
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={localNoteAmplitude}
+                onChange={(e) => {
+                  setLocalNoteAmplitude(parseFloat(e.target.value));
+                  debouncedUpdateAmplitude(
+                    selectedNoteId,
+                    parseFloat(e.target.value)
+                  );
+                }}
+                className="-rotate-90"
+              />
             ) : (
               <input
                 type="range"
