@@ -90,8 +90,8 @@ export const MIDIEditor = () => {
   );
 
   return (
-    <div ref={containerRef} className="px-4">
-      <div className="grid grid-cols-3 gap-2 mb-4">
+    <div ref={containerRef} className="px-2 sm:px-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
         <div className="grid gap-1">
           <Label htmlFor="editorOctave" className="text-sm">
             Editor Octave
@@ -133,11 +133,11 @@ export const MIDIEditor = () => {
         </div>
       </div>
       <div className="mb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <Text as="h4" className="text-base">
             Timeline
           </Text>
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-wrap gap-2 items-center">
             <Popover>
               <Popover.Trigger>
                 <Button
@@ -194,7 +194,7 @@ export const MIDIEditor = () => {
         </div>
       </div>
       <div className="mb-3">
-        <div className="flex flex-col overflow-x-auto">
+        <div className="flex flex-col overflow-x-auto -mx-2 sm:mx-0">
           {Array.from({ length: 24 }, (_, i) => {
             // Note 11 to 0 for 2 octaves: first oct = editorOctave+1, then editorOctave
             // i=0..11 => oct=editorOctave+1, id=11-i
@@ -240,7 +240,7 @@ export const MIDIEditor = () => {
           })}
         </div>
         <div className="mt-2">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="grid gap-1">
               <Label htmlFor="zoom" className="text-sm">
                 Zoom: {zoom}px/beat

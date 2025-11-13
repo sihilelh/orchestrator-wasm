@@ -22,12 +22,12 @@ export const Home = () => {
           with real-time editing, visualization, and browser-based audio
           synthesis.
         </Text>
-        <div className="flex gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button variant="default" size="lg" asChild>
-            <Link to="/playground">Get Started</Link>
+            <Link to="/playground">Go to Playground</Link>
           </Button>
           <Button variant="outline" size="lg" asChild>
-            <Link to="/how-to-use">Learn More</Link>
+            <Link to="/how-to-use">How to Use</Link>
           </Button>
         </div>
       </div>

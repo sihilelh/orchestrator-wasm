@@ -28,20 +28,31 @@ export const WaveEditor = () => {
   }, [setIsDragging, setDragIndex]);
 
   useEffect(() => {
-    document.addEventListener("mouseup", handleDragEnd);
+    const handleEnd = () => handleDragEnd();
+    document.addEventListener("mouseup", handleEnd);
+    document.addEventListener("touchend", handleEnd);
     return () => {
-      document.removeEventListener("mouseup", handleDragEnd);
+      document.removeEventListener("mouseup", handleEnd);
+      document.removeEventListener("touchend", handleEnd);
     };
   }, [handleDragEnd]);
 
-  const handleMoving = (event: React.MouseEvent, index: number) => {
+  const handleMoving = (
+    event: React.MouseEvent | React.TouchEvent,
+    index: number
+  ) => {
     if (!isDragging) return;
     event.preventDefault();
     event.stopPropagation();
 
+    const clientX =
+      "touches" in event ? event.touches[0]?.clientX ?? 0 : event.clientX;
+    const clientY =
+      "touches" in event ? event.touches[0]?.clientY ?? 0 : event.clientY;
+
     const elementBounds = event.currentTarget.getBoundingClientRect();
-    const relativeX = event.clientX - elementBounds.left;
-    const relativeY = event.clientY - elementBounds.top;
+    const relativeX = clientX - elementBounds.left;
+    const relativeY = clientY - elementBounds.top;
 
     // Clip the x value to the size
     const x = relativeX > size ? size : relativeX < 0 ? 0 : relativeX;
@@ -65,7 +76,10 @@ export const WaveEditor = () => {
     }
   };
 
-  const handleDragStart = (event: React.MouseEvent, index: number) => {
+  const handleDragStart = (
+    event: React.MouseEvent | React.TouchEvent,
+    index: number
+  ) => {
     console.log("drag start", index);
     event.preventDefault();
     event.stopPropagation();
@@ -74,7 +88,7 @@ export const WaveEditor = () => {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <Card className="w-full">
           <Card.Header>
@@ -115,12 +129,15 @@ export const WaveEditor = () => {
       </div>
       <div>
         <Card className="w-full">
-          <Card.Content className="flex items-center justify-center">
+          <Card.Content className="flex items-center justify-center p-2 sm:p-4">
             <svg
               width={size}
               height={size}
               viewBox={`0 0 ${size} ${size}`}
               onMouseMove={(event) => handleMoving(event, dragIndex)}
+              onTouchMove={(event) => handleMoving(event, dragIndex)}
+              style={{ touchAction: "none", maxWidth: "100%", height: "auto" }}
+              className="w-full max-w-full"
             >
               <circle
                 cx={0}
@@ -128,6 +145,7 @@ export const WaveEditor = () => {
                 r={10}
                 fill="var(--primary)"
                 onMouseDown={(event) => handleDragStart(event, 0)}
+                onTouchStart={(event) => handleDragStart(event, 0)}
               />
               <circle
                 cx={size}
@@ -135,6 +153,7 @@ export const WaveEditor = () => {
                 r={10}
                 fill="var(--primary)"
                 onMouseDown={(event) => handleDragStart(event, 1)}
+                onTouchStart={(event) => handleDragStart(event, 1)}
               />
               <circle
                 cx={controlPoint1.x}
@@ -143,6 +162,7 @@ export const WaveEditor = () => {
                 fill="var(--muted)"
                 stroke="var(--primary)"
                 onMouseDown={(event) => handleDragStart(event, 2)}
+                onTouchStart={(event) => handleDragStart(event, 2)}
               />
               <circle
                 cx={controlPoint2.x}
@@ -151,6 +171,7 @@ export const WaveEditor = () => {
                 fill="var(--muted)"
                 stroke="var(--primary)"
                 onMouseDown={(event) => handleDragStart(event, 3)}
+                onTouchStart={(event) => handleDragStart(event, 3)}
               />
               {/* Cubic Bezier Curve */}
               <path

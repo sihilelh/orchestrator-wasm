@@ -115,7 +115,7 @@ export const HowToUse = () => {
           <Text as="p" className="text-muted-foreground mb-4">
             The JSON format is compatible with the original CLI tool:
           </Text>
-          <pre className="bg-muted p-4 rounded text-sm overflow-x-auto">
+          <pre className="bg-muted p-4 rounded text-sm overflow-x-auto max-w-full">
             {`{
   "bpm": 120,
   "control_points": [0.5, -0.3, 0.2, -0.5],

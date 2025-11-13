@@ -383,7 +383,7 @@ export const AudioControls = ({
   audioUrl,
 }: IAudioControlsProps) => {
   return (
-    <div className="flex items-center justify-center gap-2">
+    <div className="flex flex-wrap items-center justify-center gap-2">
       <Button
         onClick={onPlay}
         disabled={!audioUrl || isGenerating}
