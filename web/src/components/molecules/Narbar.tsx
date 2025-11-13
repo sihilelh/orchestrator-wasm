@@ -5,11 +5,14 @@ import { Text } from "@/components/atoms/Text";
 import { useTheme } from "@/hooks/useTheme";
 import { cn } from "@/utils/classname.utils";
 import { Menu, X, Sun, Moon } from "lucide-react";
+import { trackThemeToggle } from "@/utils/analytics.utils";
+import { usePageTracking } from "@/hooks/useAnalytics";
 
 export const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+  usePageTracking();
 
   const navLinks = [
     { path: "/playground", label: "Playground" },
@@ -65,7 +68,11 @@ export const Navbar = () => {
             <Button
               variant="outline"
               size="icon"
-              onClick={toggleTheme}
+              onClick={() => {
+                const newTheme = theme === "light" ? "dark" : "light";
+                toggleTheme();
+                trackThemeToggle(newTheme);
+              }}
               aria-label="Toggle theme"
             >
               {theme === "light" ? (
@@ -86,7 +93,11 @@ export const Navbar = () => {
             <Button
               variant="outline"
               size="icon"
-              onClick={toggleTheme}
+              onClick={() => {
+                const newTheme = theme === "light" ? "dark" : "light";
+                toggleTheme();
+                trackThemeToggle(newTheme);
+              }}
               aria-label="Toggle theme"
             >
               {theme === "light" ? (

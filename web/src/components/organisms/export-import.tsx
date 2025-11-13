@@ -9,6 +9,7 @@ import React from "react";
 import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
 import { cn } from "@/utils/classname.utils";
+import { trackFileOperation } from "@/utils/analytics.utils";
 
 interface OrchestratorJSON {
   bpm: number;
@@ -52,11 +53,22 @@ export const ExportImport = () => {
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
+    const fileName = `orchestrator_${params.bpm}bpm_${Date.now()}.json`;
     a.href = url;
-    a.download = `orchestrator_${params.bpm}bpm_${Date.now()}.json`;
+    a.download = fileName;
     a.click();
     URL.revokeObjectURL(url);
     a.remove();
+
+    // Track export
+    trackFileOperation("export", {
+      fileType: "json",
+      fileName,
+      fileSize: blob.size,
+      noteCount: params.notes.length,
+      bpm: params.bpm,
+    });
+
     toast.success("JSON exported successfully");
   };
 
@@ -81,9 +93,30 @@ export const ExportImport = () => {
         // Setting editor related values
         setBpm(json.bpm);
         importFromNotes(json.notes);
+
+        // Track successful import
+        trackFileOperation("import", {
+          fileType: "json",
+          fileName: file.name,
+          fileSize: file.size,
+          noteCount: json.notes.length,
+          bpm: json.bpm,
+        });
+
         toast.success("JSON imported successfully");
       } catch (error) {
         console.error("Error importing MIDI:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+
+        // Track import error
+        trackFileOperation("import_error", {
+          fileType: "json",
+          fileName: file.name,
+          fileSize: file.size,
+          error: errorMessage,
+        });
+
         toast.error(
           "Failed to import JSON file. Please check the file format."
         );

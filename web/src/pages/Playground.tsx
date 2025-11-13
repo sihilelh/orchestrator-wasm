@@ -5,6 +5,7 @@ import {
   TabsContent,
   TabsTrigger,
   TabsTriggerList,
+  TabsPanels,
 } from "@/components/atoms/Tab";
 import { WaveEditor } from "@/components/organisms/wave-editor";
 import { MIDIEditor } from "@/components/organisms/midi-editor";
@@ -31,21 +32,23 @@ export const Playground = () => {
                 Export/Import
               </TabsTrigger>
             </TabsTriggerList>
-            <TabsContent>
-              <div className="h-[60vh] sm:h-[70vh] overflow-y-auto">
-                <WaveEditor />
-              </div>
-            </TabsContent>
-            <TabsContent>
-              <div className="h-[60vh] sm:h-[70vh] overflow-y-auto">
-                <MIDIEditor />
-              </div>
-            </TabsContent>
-            <TabsContent>
-              <div className="h-[60vh] sm:h-[70vh] overflow-y-auto">
-                <ExportImport />
-              </div>
-            </TabsContent>
+            <TabsPanels>
+              <TabsContent>
+                <div className="h-[60vh] sm:h-[70vh] overflow-y-auto">
+                  <WaveEditor />
+                </div>
+              </TabsContent>
+              <TabsContent>
+                <div className="h-[60vh] sm:h-[70vh] overflow-y-auto">
+                  <MIDIEditor />
+                </div>
+              </TabsContent>
+              <TabsContent>
+                <div className="h-[60vh] sm:h-[70vh] overflow-y-auto">
+                  <ExportImport />
+                </div>
+              </TabsContent>
+            </TabsPanels>
           </Tabs>
         </div>
       </div>

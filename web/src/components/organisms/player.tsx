@@ -9,6 +9,7 @@ import { Slider } from "@/components/atoms/Slider";
 import { Button } from "@/components/atoms/Button";
 import { Play, Pause, Square, RotateCw, Download } from "lucide-react";
 import { Card } from "../atoms/Card";
+import { trackAudioDownload } from "@/utils/analytics.utils";
 
 export const Player = () => {
   // Subscribe to all relevant state from MIDI store
@@ -280,7 +281,11 @@ export const Player = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }, [audioUrl, noteHash]);
+
+    trackAudioDownload({
+      duration,
+    });
+  }, [audioUrl, noteHash, duration]);
 
   // Handle force regenerate
   const handleForceRegenerate = useCallback(() => {
