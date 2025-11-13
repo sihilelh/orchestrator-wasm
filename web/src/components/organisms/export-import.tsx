@@ -123,14 +123,16 @@ export const ExportImport = () => {
           <Card.Header>
             <Card.Title>Export MIDI</Card.Title>
             <Card.Description>
-              Export the MIDI file to a JSON file.
+              Export your composition to a JSON file compatible with the
+              original CLI tool.
             </Card.Description>
           </Card.Header>
           <Card.Content>
             <Text as={"p"}>
-              This will export the current state of the application to a JSON
-              file. This generated JSON file can also be used in the CLI tool to
-              generate the same audio file.
+              Export your current composition (notes, BPM, and Bezier control
+              points) to JSON. This file format is compatible with the original
+              Orchestrator CLI tool, allowing you to share compositions between
+              the web version and command-line version.
             </Text>
             <br />
             <Button onClick={handleExportMidi}>
@@ -145,14 +147,16 @@ export const ExportImport = () => {
           <Card.Header>
             <Card.Title>Import MIDI</Card.Title>
             <Card.Description>
-              Import the MIDI file from a JSON file.
+              Import compositions from JSON files created in this app or the
+              original CLI tool.
             </Card.Description>
           </Card.Header>
           <Card.Content>
             <Text as={"p"}>
-              You can import a JSON file (from a friend or from the CLI tool) to
-              restore the state of the application. Drop the JSON file here to
-              import.
+              Import JSON files exported from this web version or created with
+              the original Orchestrator CLI tool. This allows you to continue
+              working on compositions across different platforms and share your
+              work with others.
             </Text>
             <br />
             <div

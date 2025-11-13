@@ -292,8 +292,10 @@ export const Player = () => {
       <Card.Header>
         <Card.Title>Player</Card.Title>
         <Card.Description>
-          Listen to the awesome audio you generated using Orchestrator. Click
-          the play button to start the audio.
+          Play your generated WAV audio file. Orchestrator synthesizes audio
+          using the same pipeline as the original CLI tool: JSON notation →
+          frequency calculation → waveform generation → PCM encoding → WAV file
+          format.
         </Card.Description>
       </Card.Header>
       <Card.Content>

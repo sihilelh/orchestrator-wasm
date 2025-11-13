@@ -80,16 +80,17 @@ export const WaveEditor = () => {
           <Card.Header>
             <Card.Title>Wave Editor</Card.Title>
             <Card.Description>
-              Use this to edit the wave. You can drag the points to change the
-              wave.
+              Design custom waveforms using cubic Bezier curves. This feature is
+              unique to the WebAssembly version—the original CLI tool only
+              supported sine waves.
             </Card.Description>
           </Card.Header>
           <Card.Content>
             <Text as={"p"}>
-              This uses cubic bezier curve to generate the wave's shape. By
-              dragging the points you can change the wave's shape and when
-              generating the wave, the wave will be generated based on the
-              points you dragged.
+              Drag the four control points to shape your waveform. The Bezier
+              curve defines one complete cycle of your wave, which repeats at
+              the frequency of each note. This allows you to create rich,
+              complex timbres beyond simple sine waves.
             </Text>
             <br />
             <div className="grid grid-cols-1 gap-2">

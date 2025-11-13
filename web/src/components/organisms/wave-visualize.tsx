@@ -54,8 +54,9 @@ export const WaveVisualize = () => {
       <Card.Header>
         <Card.Title>Wave Visualize</Card.Title>
         <Card.Description>
-          This is a visual representation of the wave you generated using
-          Orchestrator.
+          Preview how your Bezier curve waveform repeats across multiple cycles.
+          This shows the shape that will be used to generate audio for each note
+          in your composition.
         </Card.Description>
       </Card.Header>
       <Card.Content>

@@ -12,8 +12,15 @@ export const Home = () => {
         <Text as="p" className="text-muted-foreground mb-8 text-lg">
           by @sihilelh
         </Text>
-        <Text as="p" className="mb-8 text-lg">
-          Create and experiment with wave patterns and audio synthesis.
+        <Text as="p" className="mb-4 text-lg">
+          A WAV audio synthesizer that generates playable audio files from JSON
+          notation.
+        </Text>
+        <Text as="p" className="mb-8 text-muted-foreground">
+          Built with Rust and WebAssembly, featuring interactive Bezier curve
+          waveform generation. This web version extends the original CLI tool
+          with real-time editing, visualization, and browser-based audio
+          synthesis.
         </Text>
         <div className="flex gap-4 justify-center">
           <Button variant="default" size="lg" asChild>
