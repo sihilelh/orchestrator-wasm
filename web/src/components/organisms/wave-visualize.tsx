@@ -1,5 +1,6 @@
 import { useWaveStore } from "@/stores/wave.store";
 import { useEffect, useRef, useState } from "react";
+import { Card } from "../atoms/Card";
 
 export const WaveVisualize = () => {
   const { startPoint, endPoint, controlPoint1, controlPoint2, size } =
@@ -49,10 +50,47 @@ export const WaveVisualize = () => {
   };
 
   return (
-    <div className="w-full border border-red-500" ref={containerRef}>
-      <svg width={containerWidth} height={100}>
-        <path d={generatePathString()} stroke="black" fill="none" />
-      </svg>
-    </div>
+    <Card className="w-full">
+      <Card.Header>
+        <Card.Title>Wave Visualize</Card.Title>
+        <Card.Description>
+          This is a visual representation of the wave you generated using
+          Orchestrator.
+        </Card.Description>
+      </Card.Header>
+      <Card.Content>
+        <div className="w-full" ref={containerRef}>
+          <svg width={containerWidth} height={100}>
+            <path
+              d={generatePathString()}
+              stroke="var(--primary)"
+              fill="none"
+            />
+            {Array.from({ length: 10 }).map((_, index) => (
+              <path
+                key={index}
+                d={`M ${index * containerHeight} 0 L ${
+                  index * containerHeight
+                } ${containerHeight}`}
+                stroke="var(--primary)"
+                fill="none"
+                opacity={0.1}
+              />
+            ))}
+            {Array.from({ length: 5 }).map((_, index) => (
+              <path
+                key={index}
+                d={`M 0 ${index * (containerHeight / 4)} L 800 ${
+                  index * (containerHeight / 4)
+                }`}
+                stroke="var(--primary)"
+                fill="none"
+                opacity={0.1}
+              />
+            ))}
+          </svg>
+        </div>
+      </Card.Content>
+    </Card>
   );
 };

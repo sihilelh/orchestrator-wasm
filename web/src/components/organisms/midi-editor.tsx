@@ -3,6 +3,15 @@ import { useMIDIEditorStore } from "@/stores/midi-editor.store";
 import { Rnd } from "react-rnd";
 import { beatsToPixels, pixelsToBeats, snapToGrid } from "@/utils/editor.utils";
 import { useDebounceCallback } from "@/hooks/useDebounce";
+import { Input } from "@/components/atoms/Input";
+import { Label } from "@/components/atoms/Label";
+import { Text } from "../atoms/Text";
+import { Button } from "../atoms/Button";
+import { ArrowUpIcon, SettingsIcon } from "lucide-react";
+import { ArrowDownIcon } from "lucide-react";
+import { Popover } from "@/components/atoms/Popover";
+import { Slider } from "../atoms/Slider";
+import { Select } from "../atoms/Select";
 
 export const MIDIEditor = () => {
   const {
@@ -25,6 +34,8 @@ export const MIDIEditor = () => {
   } = useMIDIEditorStore();
 
   const [localNoteAmplitude, setLocalNoteAmplitude] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
 
   // Get selected note for amplitude slider
   const selectedNote = selectedNoteId
@@ -40,8 +51,25 @@ export const MIDIEditor = () => {
     }
   }, [selectedNote]);
 
+  // Calculate container width for responsive timeline
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.clientWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
+
   // Calculate minimum timeline width (16 beats minimum, or more if notes extend beyond)
+  // Ensure it fills the viewport width when zoomed out
   const minTimelineBeats = 16;
+  const noteLabelWidth = 80; // Width of the note label column
+  const padding = 32; // Total horizontal padding
+  const availableWidth =
+    containerWidth > 0 ? containerWidth - noteLabelWidth - padding : 0;
   const maxBeat =
     visibleTimeline.length > 0
       ? Math.max(
@@ -49,7 +77,9 @@ export const MIDIEditor = () => {
           ...visibleTimeline.map((note) => note.endBeatIndex)
         )
       : minTimelineBeats;
-  const timelineWidth = beatsToPixels(maxBeat, zoom);
+  const beatsBasedWidth = beatsToPixels(maxBeat, zoom);
+  // Use the larger of: beats-based width or available viewport width
+  const timelineWidth = Math.max(beatsBasedWidth, availableWidth);
 
   // Create debounced callback for amplitude updates
   const debouncedUpdateAmplitude = useDebounceCallback(
@@ -60,170 +90,189 @@ export const MIDIEditor = () => {
   );
 
   return (
-    <div>
-      <div className="grid grid-cols-3 gap-4">
-        <div>
-          <label htmlFor="editorOctave">Editor Octave</label>
-          <input
+    <div ref={containerRef} className="px-4">
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        <div className="grid gap-1">
+          <Label htmlFor="editorOctave" className="text-sm">
+            Editor Octave
+          </Label>
+          <Input
             type="text"
-            className="w-full"
+            id="editorOctave"
+            placeholder="Editor Octave"
             value={editorOctave}
             onChange={(e) => setEditorOctave(parseInt(e.target.value))}
-            placeholder="Editor Octave"
+            className="py-1 text-sm"
           />
         </div>
-        <div>
-          <label htmlFor="sampleRate">Sample Rate</label>
-          <input
+        <div className="grid gap-1">
+          <Label htmlFor="sampleRate" className="text-sm">
+            Sample Rate
+          </Label>
+          <Input
             type="text"
-            className="w-full"
+            id="sampleRate"
+            placeholder="Sample Rate"
             value={sampleRate}
             onChange={(e) => setSampleRate(parseInt(e.target.value))}
-            placeholder="Sample Rate"
+            className="py-1 text-sm"
           />
         </div>
-        <div>
-          <label htmlFor="bpm">BPM</label>
-          <input
+        <div className="grid gap-1">
+          <Label htmlFor="bpm" className="text-sm">
+            BPM
+          </Label>
+          <Input
             type="text"
-            className="w-full"
+            id="bpm"
+            placeholder="BPM"
             value={bpm}
             onChange={(e) => setBpm(parseInt(e.target.value))}
-            placeholder="BPM"
+            className="py-1 text-sm"
           />
         </div>
       </div>
-      <div className="mt-8">
-        <div className="flex justify-between">
-          <div>Timeline</div>
-          <div>
-            Octave Range: {editorOctave} - {editorOctave + 1}
-            <button
-              className="w-8 h-8 bg-blue-500 text-white rounded-full"
-              onClick={() => setEditorOctave(editorOctave + 1)}
-            >
-              +
-            </button>
-            <button
-              className="w-8 h-8 bg-blue-500 text-white rounded-full"
-              onClick={() => setEditorOctave(editorOctave - 1)}
-            >
-              -
-            </button>
+      <div className="mb-3">
+        <div className="flex items-center justify-between">
+          <Text as="h4" className="text-base">
+            Timeline
+          </Text>
+          <div className="flex gap-2 items-center">
+            <Popover>
+              <Popover.Trigger>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!(selectedNote && selectedNoteId)}
+                  className={`${
+                    !(selectedNote && selectedNoteId)
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                  title={
+                    !(selectedNote && selectedNoteId) ? "No note selected" : ""
+                  }
+                >
+                  Amplitude <SettingsIcon className="w-3 h-3 ml-1" />
+                </Button>
+              </Popover.Trigger>
+              <Popover.Content>
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium leading-none">
+                      Adjust Amplitude
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Set the amplitude for the selected note.
+                    </p>
+                  </div>
+                  <div>
+                    <Slider
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={[localNoteAmplitude]}
+                      onValueChange={(value) => {
+                        setLocalNoteAmplitude(value[0]);
+                        debouncedUpdateAmplitude(
+                          selectedNoteId || "",
+                          value[0]
+                        );
+                      }}
+                    />
+                  </div>
+                </div>
+              </Popover.Content>
+            </Popover>
+            <Button size="sm" onClick={() => setEditorOctave(editorOctave + 1)}>
+              Octave <ArrowUpIcon className="w-3 h-3 ml-2" />
+            </Button>
+            <Button size="sm" onClick={() => setEditorOctave(editorOctave - 1)}>
+              Octave <ArrowDownIcon className="w-3 h-3 ml-2" />
+            </Button>
           </div>
         </div>
       </div>
-      <div className="mt-8">
-        <div className="flex">
-          <div className="flex flex-col w-[90%] overflow-x-auto">
-            {Array.from({ length: 24 }, (_, i) => {
-              // Note 11 to 0 for 2 octaves: first oct = editorOctave+1, then editorOctave
-              // i=0..11 => oct=editorOctave+1, id=11-i
-              // i=12..23 => oct=editorOctave, id=23-i
-              const octave = i < 12 ? editorOctave + 1 : editorOctave;
-              const noteId = i < 12 ? 11 - i : 23 - i;
-              const rowNotes = visibleTimeline.filter(
-                (note) => note.octave === octave && note.noteId === noteId
-              );
-              return (
-                <MIDIEditorNote
-                  key={`${octave}-${noteId}`}
-                  octave={octave}
-                  id={noteId}
-                  notes={rowNotes}
-                  timelineWidth={timelineWidth}
-                  zoom={zoom}
-                  snapToGridSize={snapToGridSize}
-                  onNoteClick={(noteId) => setSelectedNoteId(noteId)}
-                  onNoteRemove={removeNote}
-                  onNoteUpdate={(noteId, updates, previousState) => {
-                    return updateNote(noteId, updates, previousState);
-                  }}
-                  selectedNoteId={selectedNoteId}
-                  onRowMouseDown={(clickX) => {
-                    const beatPosition = pixelsToBeats(clickX, zoom);
-                    const snappedBeat = snapToGrid(
-                      beatPosition,
-                      snapToGridSize
-                    );
-                    const newNoteId = addNote(
-                      octave,
-                      noteId,
-                      snappedBeat,
-                      snapToGridSize,
-                      0.8
-                    );
-                    if (newNoteId) {
-                      setSelectedNoteId(newNoteId);
-                      return newNoteId;
-                    }
-                    return null;
-                  }}
-                />
-              );
-            })}
-          </div>
-          <div className="w-[10%]">
-            Selected note's amplitude
-            {selectedNoteId && selectedNote ? (
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={localNoteAmplitude}
-                onChange={(e) => {
-                  setLocalNoteAmplitude(parseFloat(e.target.value));
-                  debouncedUpdateAmplitude(
-                    selectedNoteId,
-                    parseFloat(e.target.value)
-                  );
+      <div className="mb-3">
+        <div className="flex flex-col overflow-x-auto">
+          {Array.from({ length: 24 }, (_, i) => {
+            // Note 11 to 0 for 2 octaves: first oct = editorOctave+1, then editorOctave
+            // i=0..11 => oct=editorOctave+1, id=11-i
+            // i=12..23 => oct=editorOctave, id=23-i
+            const octave = i < 12 ? editorOctave + 1 : editorOctave;
+            const noteId = i < 12 ? 11 - i : 23 - i;
+            const rowNotes = visibleTimeline.filter(
+              (note) => note.octave === octave && note.noteId === noteId
+            );
+            return (
+              <MIDIEditorNote
+                key={`${octave}-${noteId}`}
+                octave={octave}
+                id={noteId}
+                notes={rowNotes}
+                timelineWidth={timelineWidth}
+                zoom={zoom}
+                snapToGridSize={snapToGridSize}
+                onNoteClick={(noteId) => setSelectedNoteId(noteId)}
+                onNoteRemove={removeNote}
+                onNoteUpdate={(noteId, updates, previousState) => {
+                  return updateNote(noteId, updates, previousState);
                 }}
-                className="-rotate-90"
+                selectedNoteId={selectedNoteId}
+                onRowMouseDown={(clickX) => {
+                  const beatPosition = pixelsToBeats(clickX, zoom);
+                  const snappedBeat = snapToGrid(beatPosition, snapToGridSize);
+                  const newNoteId = addNote(
+                    octave,
+                    noteId,
+                    snappedBeat,
+                    snapToGridSize,
+                    0.8
+                  );
+                  if (newNoteId) {
+                    setSelectedNoteId(newNoteId);
+                    return newNoteId;
+                  }
+                  return null;
+                }}
               />
-            ) : (
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                disabled
-                className="-rotate-90 opacity-50"
-              />
-            )}
-          </div>
+            );
+          })}
         </div>
-        <div className="mt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="zoom">Zoom (pixels per beat): {zoom}</label>
-              <input
-                type="range"
+        <div className="mt-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-1">
+              <Label htmlFor="zoom" className="text-sm">
+                Zoom: {zoom}px/beat
+              </Label>
+              <Slider
                 id="zoom"
-                min="10"
-                max="200"
-                step="5"
-                value={zoom}
-                onChange={(e) => setZoom(parseInt(e.target.value) || 50)}
-                className="w-full"
+                min={10}
+                max={200}
+                step={5}
+                value={[zoom]}
+                onValueChange={([val]) => setZoom(val || 50)}
               />
             </div>
-            <div>
-              <label htmlFor="snapToGrid">Snap to Grid (beats)</label>
-              <select
-                id="snapToGrid"
-                value={snapToGridSize}
-                onChange={(e) =>
-                  setSnapToGridSize(parseFloat(e.target.value) || 1.0)
-                }
-                className="w-full"
+            <div className="grid gap-1">
+              <Label htmlFor="snapToGrid" className="text-sm">
+                Snap to Grid
+              </Label>
+              <Select
+                value={snapToGridSize.toString()}
+                onValueChange={(value) => setSnapToGridSize(Number(value))}
               >
-                <option value={0.25}>0.25</option>
-                <option value={0.5}>0.5</option>
-                <option value={1.0}>1.0</option>
-                <option value={2.0}>2.0</option>
-                <option value={4.0}>4.0</option>
-              </select>
+                <Select.Trigger>
+                  <Select.Value placeholder="Snap to Grid (beats)" />
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="0.25">1/4 beat</Select.Item>
+                  <Select.Item value="0.5">1/2 beat</Select.Item>
+                  <Select.Item value="1">1 beat</Select.Item>
+                  <Select.Item value="2">2 beats</Select.Item>
+                  <Select.Item value="4">4 beats</Select.Item>
+                </Select.Content>
+              </Select>
             </div>
           </div>
         </div>
@@ -232,7 +281,8 @@ export const MIDIEditor = () => {
   );
 };
 
-export const MIDIEditorNote = (props: {
+/* eslint-disable no-unused-vars */
+interface MidiEditorNoteProps {
   octave: number;
   id: number;
   notes: Array<{
@@ -264,7 +314,10 @@ export const MIDIEditorNote = (props: {
   ) => boolean;
   onRowMouseDown: (clickX: number) => string | null; // Returns note ID if created, null otherwise
   selectedNoteId: string | null;
-}) => {
+}
+/* eslint-enable no-unused-vars */
+
+export const MIDIEditorNote = (props: MidiEditorNoteProps) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const [draggingNoteId, setDraggingNoteId] = useState<string | null>(null);
   const [draggingNotePosition, setDraggingNotePosition] = useState<
@@ -279,18 +332,18 @@ export const MIDIEditorNote = (props: {
   >(new Map());
   const creatingNoteStartRef = useRef<number | null>(null);
   const ids = [
-    { label: `C${props.octave}`, className: "bg-neutral-100" },
-    { label: `C${props.octave}#`, className: "bg-neutral-400" },
-    { label: `D${props.octave}`, className: "bg-neutral-100" },
-    { label: `D${props.octave}#`, className: "bg-neutral-400" },
-    { label: `E${props.octave}`, className: "bg-neutral-100" },
-    { label: `F${props.octave}`, className: "bg-neutral-100" },
-    { label: `F${props.octave}#`, className: "bg-neutral-400" },
-    { label: `G${props.octave}`, className: "bg-neutral-100" },
-    { label: `G${props.octave}#`, className: "bg-neutral-400" },
-    { label: `A${props.octave}`, className: "bg-neutral-100" },
-    { label: `A${props.octave}#`, className: "bg-neutral-400" },
-    { label: `B${props.octave}`, className: "bg-neutral-100" },
+    { label: `C${props.octave}`, className: "bg-card" },
+    { label: `C${props.octave}#`, className: "bg-muted" },
+    { label: `D${props.octave}`, className: "bg-card" },
+    { label: `D${props.octave}#`, className: "bg-muted" },
+    { label: `E${props.octave}`, className: "bg-card" },
+    { label: `F${props.octave}`, className: "bg-card" },
+    { label: `F${props.octave}#`, className: "bg-muted" },
+    { label: `G${props.octave}`, className: "bg-card" },
+    { label: `G${props.octave}#`, className: "bg-muted" },
+    { label: `A${props.octave}`, className: "bg-card" },
+    { label: `A${props.octave}#`, className: "bg-muted" },
+    { label: `B${props.octave}`, className: "bg-card" },
   ];
 
   const handleRowMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -359,22 +412,22 @@ export const MIDIEditorNote = (props: {
   };
 
   return (
-    <div className="flex flex-row gap-4 relative" style={{ minHeight: "32px" }}>
+    <div className="flex flex-row gap-2 relative" style={{ minHeight: "18px" }}>
       <div
         className={`${
           ids[props.id].className
-        } sticky left-0 z-10 min-w-[80px] flex items-center justify-center`}
+        } sticky left-0 z-10 min-w-[80px] flex items-center justify-center text-xs border-r border-border`}
         style={{ position: "sticky", left: 0 }}
       >
         {ids[props.id].label}
       </div>
       <div
         ref={rowRef}
-        className="timeline-row relative border-b border-gray-200 cursor-pointer"
+        className="timeline-row relative border-b border-border cursor-pointer"
         style={{
           width: `${props.timelineWidth}px`,
           minWidth: `${props.timelineWidth}px`,
-          height: "32px",
+          height: "18px",
         }}
         onMouseDown={handleRowMouseDown}
         onMouseMove={handleRowMouseMove}
@@ -392,13 +445,13 @@ export const MIDIEditorNote = (props: {
               : note.startBeatIndex;
           const x = beatsToPixels(startBeat, props.zoom);
           const width = beatsToPixels(note.duration, props.zoom);
-          const opacity = 0.2 + note.amplitude / 1.25;
+          const opacity = 0.3 + note.amplitude * 0.7;
           const isSelected = props.selectedNoteId === note.id;
 
           return (
             <Rnd
               key={note.id}
-              size={{ width, height: 30 }}
+              size={{ width, height: 16 }}
               position={{ x, y: 1 }}
               onDragStart={() => {
                 setDraggingNoteId(note.id);
@@ -493,14 +546,16 @@ export const MIDIEditorNote = (props: {
                 props.onNoteClick(note.id);
               }}
               style={{
-                backgroundColor: `rgba(59, 130, 246, ${opacity})`,
+                backgroundColor: `color-mix(in srgb, var(--primary) ${
+                  opacity * 100
+                }%, transparent)`,
                 border: isSelected
-                  ? "3px solid rgba(255, 215, 0, 1)"
-                  : "1px solid rgba(59, 130, 246, 0.8)",
+                  ? "2px solid var(--primary)"
+                  : "1px solid var(--border)",
                 borderRadius: "2px",
                 cursor: draggingNoteId === note.id ? "grabbing" : "move",
                 boxShadow: isSelected
-                  ? "0 0 8px rgba(255, 215, 0, 0.6)"
+                  ? "0 0 4px color-mix(in srgb, var(--primary) 60%, transparent)"
                   : "none",
               }}
             />

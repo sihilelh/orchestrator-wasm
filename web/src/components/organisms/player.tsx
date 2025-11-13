@@ -1,10 +1,14 @@
 import { useMIDIEditorStore } from "@/stores/midi-editor.store";
 import { useWaveStore } from "@/stores/wave.store";
 import initWasm, { bezier_orchestrator, init } from "orchestrator-wasm";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import murmurhash from "murmurhash-js";
 import { useDebounce } from "@/hooks/useDebounce";
 import { getClippedPathValues } from "@/utils/path";
+import { Slider } from "@/components/atoms/Slider";
+import { Button } from "@/components/atoms/Button";
+import { Play, Pause, Square, RotateCw, Download } from "lucide-react";
+import { Card } from "../atoms/Card";
 
 export const Player = () => {
   // Subscribe to all relevant state from MIDI store
@@ -18,6 +22,12 @@ export const Player = () => {
   const [noteHash, setNoteHash] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [wasmInitialized, setWasmInitialized] = useState<boolean>(false);
+
+  // Audio playback state
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [duration, setDuration] = useState<number>(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Create a dependency object for values that need debouncing (exclude timeline/notes)
   const debounceableDependencies = useMemo(
@@ -76,7 +86,9 @@ export const Player = () => {
     if (!wasmInitialized) {
       return;
     }
-
+    console.log(
+      `[Player] Generating new audio due to changes hash:${noteHash}`
+    );
     setIsGenerating(true);
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
@@ -136,6 +148,7 @@ export const Player = () => {
     controlPoint1.x,
     controlPoint2.x,
     size,
+    noteHash,
   ]);
 
   // Generate audio when timeline changes immediately, or when debounced values change
@@ -172,31 +185,239 @@ export const Player = () => {
     }
   }, [timeline, debouncedValues, noteHash, generateAudio, wasmInitialized]);
 
+  // Handle audio events
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+    };
+
+    const handleLoadedMetadata = () => {
+      setDuration(audio.duration);
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    };
+
+    const handlePlay = () => {
+      setIsPlaying(true);
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+    };
+
+    audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
+
+    return () => {
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audio.removeEventListener("ended", handleEnded);
+      audio.removeEventListener("play", handlePlay);
+      audio.removeEventListener("pause", handlePause);
+    };
+  }, [audioUrl]);
+
+  // Playback control functions
+  const handlePlayPause = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play().catch((error) => {
+        console.error("Error playing audio:", error);
+      });
+    }
+  }, [isPlaying]);
+
+  const handleStop = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.pause();
+    audio.currentTime = 0;
+    setIsPlaying(false);
+    setCurrentTime(0);
+  }, []);
+
+  const handleSeek = useCallback(
+    (value: number[]) => {
+      const audio = audioRef.current;
+      if (!audio || !duration) return;
+
+      const newTime = (value[0] / 100) * duration;
+      audio.currentTime = newTime;
+      setCurrentTime(newTime);
+    },
+    [duration]
+  );
+
+  // Format time helper
+  const formatTime = (seconds: number): string => {
+    if (isNaN(seconds) || !isFinite(seconds)) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Handle download
+  const handleDownload = useCallback(() => {
+    if (!audioUrl) return;
+
+    const link = document.createElement("a");
+    link.href = audioUrl;
+    link.download = `audio-${noteHash || "generated"}.wav`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [audioUrl, noteHash]);
+
+  // Handle force regenerate
+  const handleForceRegenerate = useCallback(() => {
+    generateAudio();
+  }, [generateAudio]);
+
   return (
-    <div className="border border-blue-500 h-24">
-      {audioUrl ? (
-        <audio
-          src={audioUrl}
-          controls
-          className="w-full"
-          onError={(e) => console.error("Audio error:", e)}
-        />
-      ) : (
-        <div className="text-xs text-red-400">No audio URL</div>
-      )}
-      {isGenerating && (
-        <div className="text-xs text-neutral-400">Generating...</div>
-      )}
-      {hasPendingChanges && !isGenerating && (
-        <div className="text-xs text-yellow-400">Changes pending...</div>
-      )}
-      <div className="text-xs text-neutral-400">Hash: {noteHash}</div>
-      <div className="text-xs text-neutral-400">
-        Timeline: {timeline.length} notes
-      </div>
-      {!wasmInitialized && (
-        <div className="text-xs text-yellow-400">Initializing WASM...</div>
-      )}
+    <Card>
+      <Card.Header>
+        <Card.Title>Player</Card.Title>
+        <Card.Description>
+          Listen to the awesome audio you generated using Orchestrator. Click
+          the play button to start the audio.
+        </Card.Description>
+      </Card.Header>
+      <Card.Content>
+        {/* Hidden audio element for actual playback */}
+        {audioUrl && (
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            onError={(e) => console.error("Audio error:", e)}
+            className="hidden"
+          />
+        )}
+
+        {/* Custom Player Controls */}
+        {audioUrl ? (
+          <div className="space-y-3">
+            {/* Progress Slider */}
+            <div className="space-y-1">
+              <Slider
+                value={duration > 0 ? [(currentTime / duration) * 100] : [0]}
+                onValueChange={handleSeek}
+                max={100}
+                step={0.1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-neutral-400">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+            </div>
+
+            {/* Control Buttons */}
+            <AudioControls
+              isPlaying={isPlaying}
+              isGenerating={isGenerating}
+              onPlay={handlePlayPause}
+              onStop={handleStop}
+              onForceRegenerate={handleForceRegenerate}
+              onDownload={handleDownload}
+              audioUrl={audioUrl}
+            />
+            <div className="text-xs text-neutral-400">Hash: {noteHash}</div>
+            <div className="text-xs text-neutral-400">
+              Timeline: {timeline.length} notes
+            </div>
+          </div>
+        ) : (
+          <div className="text-xs text-red-400">
+            Nothing to play yet. Tinker with the timeline and generate some
+            audio!
+          </div>
+        )}
+
+        {/* Status Messages */}
+        {isGenerating && (
+          <div className="text-xs text-neutral-400">Generating...</div>
+        )}
+        {hasPendingChanges && !isGenerating && (
+          <div className="text-xs text-yellow-400">Changes pending...</div>
+        )}
+        {!wasmInitialized && (
+          <div className="text-xs text-yellow-400">Initializing WASM...</div>
+        )}
+      </Card.Content>
+    </Card>
+  );
+};
+
+interface IAudioControlsProps {
+  isPlaying: boolean;
+  isGenerating: boolean;
+  onPlay: () => void;
+  onStop: () => void;
+  onForceRegenerate: () => void;
+  onDownload: () => void;
+  audioUrl: string | null;
+}
+export const AudioControls = ({
+  isPlaying,
+  isGenerating,
+  onPlay,
+  onStop,
+  onForceRegenerate,
+  onDownload,
+  audioUrl,
+}: IAudioControlsProps) => {
+  return (
+    <div className="flex items-center justify-center gap-2">
+      <Button
+        onClick={onPlay}
+        disabled={!audioUrl || isGenerating}
+        size="md"
+        variant="default"
+      >
+        {isPlaying ? (
+          <Pause className="h-4 w-4" />
+        ) : (
+          <Play className="h-4 w-4" />
+        )}
+      </Button>
+      <Button
+        onClick={onStop}
+        disabled={!audioUrl || isGenerating || !isPlaying}
+        size="md"
+        variant="secondary"
+      >
+        <Square className="h-4 w-4" />
+      </Button>
+      <Button
+        onClick={onForceRegenerate}
+        disabled={isGenerating}
+        size="md"
+        variant="outline"
+      >
+        <RotateCw className={`h-4 w-4 ${isGenerating ? "animate-spin" : ""}`} />
+      </Button>
+      <Button
+        onClick={onDownload}
+        disabled={!audioUrl || isGenerating}
+        size="md"
+        variant="outline"
+      >
+        <Download className="h-4 w-4" />
+      </Button>
     </div>
   );
 };

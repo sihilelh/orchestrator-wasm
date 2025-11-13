@@ -1,23 +1,26 @@
 import "./App.css";
-import { WaveEditor } from "@/components/organisms/wave-editor";
-import { WaveVisualize } from "@/components/organisms/wave-visualize";
-import { MIDIEditor } from "@/components/organisms/midi-editor";
-import { Player } from "@/components/organisms/player";
-import { ExportImport } from "@/components/organisms/export-import";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Navbar } from "./components/molecules/Narbar";
+import { Home } from "./pages/Home";
+import { Playground } from "./pages/Playground";
+import { HowToUse } from "./pages/HowToUse";
+import { About } from "./pages/About";
+import { Toaster } from "./components/atoms/Sonner";
 
 function App() {
   return (
-    <div className="grid grid-cols-2 gap-4 p-8">
-      <div>
-        <WaveEditor />
-        <WaveVisualize />
-        <Player />
+    <BrowserRouter>
+      <div className="h-screen">
+        <Toaster position="top-center" />
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/playground" element={<Playground />} />
+          <Route path="/how-to-use" element={<HowToUse />} />
+          <Route path="/about" element={<About />} />
+        </Routes>
       </div>
-      <div>
-        <ExportImport />
-        <MIDIEditor />
-      </div>
-    </div>
+    </BrowserRouter>
   );
 }
 
